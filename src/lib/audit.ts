@@ -99,6 +99,37 @@ export async function recordDisputeTransitionAudit(input: {
 }
 
 /**
+ * Record a registration retention dry-run report generation.
+ *
+ * Wraps {@link recordAuditLog} with the canonical action name and a stable
+ * metadata shape so operators can trace rehearsals before purging contributor
+ * PII. Best-effort like the underlying helper; the report itself never
+ * contains unmasked addresses (see `src/lib/cron-export.ts`).
+ */
+export async function recordRetentionDryRunAudit(input: {
+  actorId?: string | null;
+  actorLogin?: string | null;
+  format: "json" | "csv";
+  candidateCount: number;
+  cutoff: string;
+  reasonCode?: string | null;
+}): Promise<void> {
+  await recordAuditLog({
+    action: "registrations.retention.dry_run",
+    actorId: input.actorId ?? null,
+    actorLogin: input.actorLogin ?? null,
+    targetId: input.cutoff,
+    targetLabel: input.format,
+    metadata: {
+      format: input.format,
+      candidateCount: input.candidateCount,
+      cutoff: input.cutoff,
+      reasonCode: input.reasonCode ?? null,
+    },
+  });
+}
+
+/**
  * Persist a maintainer action to the audit log, surfacing failures.
  *
  * Unlike {@link recordAuditLog}, this variant rejects when the audit write
