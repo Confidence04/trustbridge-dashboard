@@ -68,6 +68,37 @@ export async function recordNetworkSwitchAudit(input: {
 }
 
 /**
+ * Record a dispute status transition performed by a maintainer.
+ *
+ * Wraps {@link recordAuditLogStrict} with the canonical action name and a
+ * stable metadata shape so the dispute trail stays consistent across call
+ * sites. Strict: a transition must not succeed without an audit record, so
+ * closed cases cannot reopen without a trail.
+ */
+export async function recordDisputeTransitionAudit(input: {
+  actorId?: string | null;
+  actorLogin?: string | null;
+  disputeId: string;
+  fromStatus: string;
+  toStatus: string;
+  reason?: string | null;
+}): Promise<void> {
+  await recordAuditLogStrict({
+    action: "dispute.status.transition",
+    actorId: input.actorId ?? null,
+    actorLogin: input.actorLogin ?? null,
+    targetId: input.disputeId,
+    targetLabel: input.disputeId,
+    metadata: {
+      disputeId: input.disputeId,
+      fromStatus: input.fromStatus,
+      toStatus: input.toStatus,
+      reason: input.reason ?? null,
+    },
+  });
+}
+
+/**
  * Persist a maintainer action to the audit log, surfacing failures.
  *
  * Unlike {@link recordAuditLog}, this variant rejects when the audit write
